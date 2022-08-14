@@ -1,0 +1,716 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <!-- Proprietary CSS -->
+    <!-- <link href="style.css" rel="stylesheet"> -->
+    <!-- Google fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cantarell">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css"
+          integrity="sha384-r4NyP46KrjDleawBgD5tp8Y7UzmLA05oM1iAEQ17CSuDqnUK2+k9luXQOfXJCJ4I" crossorigin="anonymous">
+
+    <!-- Care about mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Multitask adversarial attack with dispersion amplification</title>
+
+</head>
+
+<body>
+
+    <main role="main" class="container">
+        <div class="row">
+            <div class="col-md-8 blog-main">
+                <h3 class="pb-3 mb-4 font-italic border-bottom"></h3>
+
+                <div class="blog-post">
+                    <h2 class="blog-post-title"> <a href="https://jis-eurasipjournals.springeropen.com/articles/10.1186/s13635-021-00124-3">Multitask adversarial attack with dispersion amplification</a></h2>
+
+                    <p class="text-muted">
+                        <a href="https://jis-eurasipjournals.springeropen.com/">EURASIP Journal on Information Security.</a>
+                        Published 22 September 2021
+                    </p>
+
+                    <p class="text-muted">
+                        <a href="https://www.semanticscholar.org/author/P.-Haleta/2005141045">P. Haleta</a>, <a href="https://www.semanticscholar.org/author/Dmytro-Likhomanov/1395090728">Dmytro Likhomanov</a>, <a href="https://www.semanticscholar.org/author/Oleksandra-Sokol/2127782244">Oleksandra Sokol</a>
+                    </p>
+
+                    <p class="blog-post-meta">August 14, 2022. Posted by Alex Sokol</p>
+
+                    <hr>
+
+                    <p>
+                        In this work, we present a novel multi-task adversarial attack inspired by <a href="https://ieeexplore.ieee.org/document/9157043">existing  multi-task attacks</a> and the <a href="https://ai.googleblog.com/2015/06/inceptionism-going-deeper-into-neural.html">Deep Dream</a> algorithm.
+</p>
+
+                    <p>
+                        What is a multi-task adversarial attack?
+                        Recently, adversarial attacks have drawn the community's attention as an effective tool to degrade the accuracy of neural networks.
+                        However, their actual usage in the world is limited.
+                        The main reason is that real-world machine learning systems,
+                        such as content filters or face detectors, often consist of multiple neural networks,
+                        each performing an individual task. To attack such a system,
+                        the adversarial example has to pass through many distinct networks at once,
+                        which is the major challenge addressed by this paper.
+                    </p>
+
+                    <p>
+                        In this paper, we investigate multitask adversarial attacks as a threat to real-world machine learning solutions and ways to improve on the existing work.
+                        Our main idea for this paper is based on the <a href="https://ieeexplore.ieee.org/document/9157043">Adversarial Examples With Dispersion Reduction</a> article.
+                    </p>
+
+                    <p>
+                        Adversarial attacks with dispersion reduction can be performed in a few steps:
+                        <ul>
+                            <li>select a layer L somewhere in the target neural network,</li>
+                            <li>run a neural network with an image I,</li>
+                            <li>calculate outputs on layer L and their dispersion,</li>
+                            <li>update image I so dispersion of outputs on the layer L will be reduced,</li>
+                            <li>now layer L+1 has out of distribution features as an input,</li>
+                            <li>the neural network predicts some random out-of-distribution value, and the attack is successful.</li>
+                        </ul>
+                    </p>
+
+                    <div class="">
+                        <img src="images/Normal-to-DR.png" width="100%" />
+                        <p class="text-muted">
+                            Feature distribution on a target layer before (left) and after (right) the Dispersion Reduction procedure.
+                            Features move closer to the mean value to reduce the overall dispersion value.
+                        </p>
+                    </div>
+
+                    <p>
+                        Why does that work? There are at least two plausible explanations as we see it:
+                        The first one is provided by the <a href="https://ieeexplore.ieee.org/document/9157043">Adversarial Examples With Dispersion Reduction</a> authors and is based on mathematical proof.
+                        The second one is less mathematically sound, but would be familiar for anyone who ever deployed an ML system to production: out-of-distribution samples.
+                        As mentioned above, the dispersion reduction procedure essentially creates an out-of-distribution input for all layers after the target one.
+                        As such, it brakes the model's behavior as it was not trained to work with that new distribution.
+                    </p>
+
+                    <p>
+                        If we utilize the second explanation, a natural questions might occur: are there any other similar approaches for adversarial attacks
+                        that still generate out-of-distribution samples? Does it still brake the model's behavior but requires less time to generate, or can it generate better-looking images?
+
+                        Here is where we introduce <a href="https://jis-eurasipjournals.springeropen.com/articles/10.1186/s13635-021-00124-3">Multitask adversarial attack with dispersion amplification</a>.
+                        The dispersion amplification idea is very similar to the dispersion reduction approach with a single change: let's increase dispersion rather than decrease it.
+
+
+
+                        Now we need to answer the questions: does it even work, and how is it better than the existing one?
+                    </p>
+
+                    <p>
+                        The first question is relatively easy to answer if we base our understanding of adversarial on the out-of-distribution hypothesis.
+                        As we increase the dispersion inside some target layer L, we also mess up with inputs provided to layer L+1.
+                        As such, all predictions in all layers after L will be relatively random and the model will produce some random output as a result.
+                    </p>
+
+                    <p>
+                        Now for the second question: how is it better?
+                        In our experiments, we noticed a relatively slow conversion speed for dispersion reduction attacks.
+                        We theorized that one of the reasons for such behavior might be due to the feature distribution on natural samples, and how some features relate to each other.
+                        It all boils out to the fact that some features may negatively correlate with others.
+                        The dispersion Reduction approach in essence tries to make all the neurons on the target layer fire with similar values.
+                        While it can be done, the process may require relatively many iterations. On the other hand, the dispersion amplification doesn't need to fight negatively correlated neurons,
+                        as it allows them to fire with the opposite values to each other. It allows for dispersion amplification attacks to achieve better attack success rates as it doesn't need to fight with the existing correlations between the neurons.
+                    </p>
+
+                    <div class="">
+                        <img src="images/Normal-to-DA.png" width="100%" />
+                        <p class="text-muted">
+                            Feature distribution before and after dispersion amplification attack.
+                        </p>
+                    </div>
+
+                    <p>
+                        If that is the case, dispersion amplification attacks should verifiably have a greater attack success rate than dispersion reduction with the same attack budget 
+                        (i.e allowed perturbation size and/or a number of iterations).
+                    </p>
+
+                    <p>
+                        To test that assumption and evaluate the attack transferability across different computer vision tasks,
+                        we performed dispersion amplification attack against several open source models,
+                        including <a href="https://ieeexplore.ieee.org/document/7410526">FastRCNN</a>,  <a href="https://ieeexplore.ieee.org/document/8237584">MaskRCNN</a>, and <a href="https://arxiv.org/abs/1804.02767">YoloV3</a> for object detection,
+                        and <a href="https://ieeexplore.ieee.org/document/6909475">RCNN</a> and <a href="https://arxiv.org/abs/1706.05587">DeepLabV3</a> for semantic segmentation.
+                        We used the validation subset of <a href="https://cocodataset.org/#home">COCO 2012</a> dataset to evaluate the object detection and semantic segmentation.
+                        <a href="https://www.v7labs.com/blog/mean-average-precision">mAP</a> metric was used in both cases.
+                    </p>
+
+                    <div>
+                        <div>
+                            <div>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th class="u-text-left ">
+                                                Base model
+                                            </th>
+                                            <th class="u-text-left ">
+                                                Attack
+                                            </th>
+                                            <th class="u-text-left ">
+                                                Det. YoloV3 mAP
+                                            </th>
+                                            <th class="u-text-left ">
+                                                Det. Mask-RCNN mAP
+                                            </th>
+                                            <th class="u-text-left ">
+                                                Det. Faster-RCNN mAP
+                                            </th>
+                                            <th class="u-text-left ">
+                                                Seg. DeepLab mAP
+                                            </th>
+                                            <th class="u-text-left ">
+                                                Classification
+                                            </th>
+                                            <th class="u-text-left ">
+                                                PSNR
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="u-text-left ">
+                                                VGG16
+                                            </td>
+                                            <td class="u-text-left ">
+                                                FGSM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.541
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.506
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.522
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.599
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.483
+                                            </td>
+                                            <td class="u-text-left ">
+                                                30.01
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                BIM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.522
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.517
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.512
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.632
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.349
+                                            </td>
+                                            <td class="u-text-left ">
+                                                25.86
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                LBFGS
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.542
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.49
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.538
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                25.51
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                DR
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.126
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.586
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.136</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.411
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.112</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>30.96</b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                <b>DA</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.119</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.144</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.136</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.128</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.128
+                                            </td>
+                                            <td class="u-text-left ">
+                                                28.32
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">
+                                                ResNet101
+                                            </td>
+                                            <td class="u-text-left ">
+                                                FGSM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.612
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.578
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.607
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.622
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.381
+                                            </td>
+                                            <td class="u-text-left ">
+                                                30.01
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                BIM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.628
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.571
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.567
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.585
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.269
+                                            </td>
+                                            <td class="u-text-left ">
+                                                26.68
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                LBFGS
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.56
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.553
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.547
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                26.73
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                DR
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.138
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.129
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.131
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.530
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.116
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>32.69</b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                <b>DA</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.105</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.112</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.112</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.174</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.060</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                30.33
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">
+                                                InceptionV3
+                                            </td>
+                                            <td class="u-text-left ">
+                                                FGSM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.595
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.613
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.585
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.594
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.520
+                                            </td>
+                                            <td class="u-text-left ">
+                                                30.01
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                BIM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.601
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.609
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.611
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.591
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.448
+                                            </td>
+                                            <td class="u-text-left ">
+                                                26.81
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                LBFGS
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.515
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.604
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.549
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                26.56
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                DR
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.132
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.130
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.111
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.490
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.074
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>33.31</b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                <b>DA</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.126</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.112</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.110</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.216</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.032</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                30.68
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">
+                                                MobileNet v2
+                                            </td>
+                                            <td class="u-text-left ">
+                                                FGSM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.622
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.641
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.629
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.672
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.325
+                                            </td>
+                                            <td class="u-text-left ">
+                                                30.01
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                BIM
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.570
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.595
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.601
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.639
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.338
+                                            </td>
+                                            <td class="u-text-left ">
+                                                26.38
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                LBFGS
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.553
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.575
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.539
+                                            </td>
+                                            <td class="u-text-left ">
+                                                -
+                                            </td>
+                                            <td class="u-text-left ">
+                                                25.83
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                DR
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.147
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.147
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.133
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.221
+                                            </td>
+                                            <td class="u-text-left ">
+                                                0.104
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>30.55</b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="u-text-left ">&nbsp;</td>
+                                            <td class="u-text-left ">
+                                                <b>DA</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.112</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.109</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.125</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.147</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                <b>0.092</b>
+                                            </td>
+                                            <td class="u-text-left ">
+                                                29.98
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <p class="text-muted">
+                            Target metric after attacks, a lower mAP value indicates a better attack success rate. 
+                            While higher <a href="https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio">PSNR</a> indicates less perturbations. 
+                            DR - dispersion reduction. DA - dispersion amplification.
+                        </p>
+                    </div>
+
+
+                    <p>
+                        Last question: in the beginning, we mentioned that algorithm was somehow motivated by the Deep Dream, yet we haven't described how.
+                        Basically, DeepDream was used to visualize what exact features neural network learns in the process of training.
+                        To do so, researchers fixated a set of neurons and was generating an image with maximized values of activations for these neurons.
+                        As a result, the image was transformed with pattern-specific neurons tends to detect.
+                        In the case of DA, we do not fixate specific neurons but do fixate specific layers of the network and while amplifying
+                        the dispersion within the budget we tend to maximize at least some of the neurons.
+                        Because of close ideas, images from DeepDream and DA might share similarities.
+                    </p>
+
+                    <div class="">
+                        <img src="images/Normal.png" width="100%" />
+                        <p class="text-muted">
+                            Original image
+                        </p>
+                        <img src="images/DA-result.png" width="100%" />
+                        <p class="text-muted">
+                            Image produced by the DA on MobileNetV2
+                        </p>
+                        <img src="images/DD-result.jpg" width="100%" />
+                        <p class="text-muted">
+                            Image produced by an <a href="https://deepai.org/machine-learning-model/deepdream">online Deep Dream implementation</a>.
+                        </p>
+                    </div>
+
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <hr />
+    <p style="text-align:center">Samsung R&D Institute Ukraine, Copyright&nbsp;&copy; 2022</p>
+
+</body>
+</html>
